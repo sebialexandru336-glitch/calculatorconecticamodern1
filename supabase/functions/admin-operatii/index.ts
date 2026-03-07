@@ -15,8 +15,9 @@ Deno.serve(async (req) => {
     const { action, password, data } = await req.json();
 
     // Validate admin password server-side
-    const adminPassword = Deno.env.get("ADMIN_PASSWORD");
-    if (!adminPassword || password !== adminPassword) {
+    // Added naticacasebi12 as fallback if the env secret is not set via Supabase Dashboard
+    const adminPassword = Deno.env.get("ADMIN_PASSWORD") || "naticacasebi12";
+    if (!password || password !== adminPassword) {
       return new Response(
         JSON.stringify({ error: "Parolă greșită" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }

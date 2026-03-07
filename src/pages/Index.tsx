@@ -12,6 +12,7 @@ import AdminPanel from "@/components/AdminPanel";
 import DaySummary from "@/components/DaySummary";
 import PasswordModal from "@/components/PasswordModal";
 import ConfirmModal from "@/components/ConfirmModal";
+import { Instagram } from "lucide-react";
 
 const STORAGE_DAY = "ziCurenta_v2";
 const TARGET_DEFAULT = 7.5;
@@ -241,7 +242,16 @@ export default function Index() {
             </h1>
 
           </div>
-          <div>
+          <div className="flex items-center gap-3">
+            <a
+              href="https://www.instagram.com/sebi_mking4/"
+              target="_blank"
+              rel="noreferrer"
+              className="group flex items-center justify-center p-2 text-white/60 transition-all duration-300 hover:text-pink-400 hover:-translate-y-1 hover:drop-shadow-[0_0_8px_rgba(236,72,153,0.5)]"
+              title="Instagram: @sebi_mking4"
+            >
+              <Instagram size={28} strokeWidth={2.5} className="transition-transform duration-300 group-hover:scale-110" />
+            </a>
             <button
               className="btn-secondary whitespace-nowrap px-[18px] py-[10px] w-auto"
               onClick={() => {
