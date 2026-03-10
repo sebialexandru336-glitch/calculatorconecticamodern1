@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Calculator, X, ArrowRightToLine } from 'lucide-react';
 
 interface CalculatorWidgetProps {
@@ -12,6 +13,11 @@ export const CalculatorWidget: React.FC<CalculatorWidgetProps> = ({ onTransfer }
   const [operator, setOperator] = useState<string | null>(null);
   const [waitingForNewValue, setWaitingForNewValue] = useState(false);
   const [equationStr, setEquationStr] = useState('');
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleNumber = (num: string) => {
     if (display === 'Error') {
@@ -68,7 +74,6 @@ export const CalculatorWidget: React.FC<CalculatorWidgetProps> = ({ onTransfer }
       if (result === 'Error') {
         setDisplay('Error');
       } else {
-        // Round to 4 decimal places to avoid float precision issues
         const roundedResult = Math.round((result as number) * 10000) / 10000;
         setDisplay(String(roundedResult));
       }
@@ -117,22 +122,21 @@ export const CalculatorWidget: React.FC<CalculatorWidgetProps> = ({ onTransfer }
     else handleNumber(action);
   };
 
-  return (
-    <div className="absolute top-4 right-4 z-50 flex flex-col items-end gap-3">
-      {/* Floating Action Button */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="h-[42px] w-[42px] rounded-xl bg-muted/50 border border-border shadow-sm text-foreground/80 hover:text-foreground hover:bg-white/10 flex items-center justify-center transition-all hover:-translate-y-0.5 hover:shadow-md active:scale-95 backdrop-blur-md"
-        aria-label="Toggle Calculator"
-      >
-        {isOpen ? <X size={20} /> : <Calculator size={20} />}
-      </button>
+  const renderModal = () => {
+    if (!isOpen || !mounted) return null;
 
-      {/* Calculator Container */}
-      {isOpen && (
-        <div className="bg-[#24263b] border border-white/10 rounded-2xl shadow-2xl p-5 w-72 animate-in slide-in-from-top-4 fade-in duration-200">
-          <div className="flex justify-between items-center mb-4 text-white">
-            <h3 className="font-semibold text-lg tracking-wide shadow-sm">Calculator</h3>
+    return createPortal(
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center sm:p-4 px-2 py-6">
+        {/* Backdrop */}
+        <div 
+          className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+          onClick={() => setIsOpen(false)}
+        />
+        
+        {/* Modal Window */}
+        <div className="bg-[#1a1b2e]/90 backdrop-blur-2xl border border-white/10 rounded-[28px] shadow-[0_24px_60px_rgba(0,0,0,0.5)] p-6 w-full max-w-[340px] relative z-10 animate-in zoom-in-95 slide-in-from-bottom-4 duration-300">
+          <div className="flex justify-between items-center mb-5 text-white">
+            <h3 className="font-bold text-[19px] tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">Calculator</h3>
             <div className="flex items-center gap-2">
               {onTransfer && (
                 <button 
@@ -142,22 +146,26 @@ export const CalculatorWidget: React.FC<CalculatorWidgetProps> = ({ onTransfer }
                       setIsOpen(false);
                     }
                   }} 
-                  className="text-white hover:text-white bg-[#8b5cf6] hover:bg-[#7c3aed] flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm transition-all active:scale-95"
+                  className="text-white bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-[13px] font-semibold shadow-lg shadow-purple-500/20 transition-all active:scale-95"
                   title="Transferă rezultatul"
                 >
                   <ArrowRightToLine size={14} />
                   <span>Transferă</span>
                 </button>
               )}
-              <button onClick={() => setIsOpen(false)} className="text-white/40 hover:text-white transition-colors bg-white/5 hover:bg-white/10 p-1.5 rounded-lg" title="Închide">
-                <X size={16} />
+              <button 
+                onClick={() => setIsOpen(false)} 
+                className="text-white/40 hover:text-white transition-colors bg-white/5 hover:bg-white/10 p-2 rounded-xl" 
+                title="Închide"
+              >
+                <X size={18} />
               </button>
             </div>
           </div>
           
-          <div className="bg-[#35384e] rounded-xl p-4 text-right mb-5 border border-white/5 shadow-inner">
-            <div className="text-sm text-white/50 min-h-[1.25rem] font-medium tracking-wider">{equationStr}</div>
-            <div className="text-4xl font-semibold truncate mt-1 text-white tracking-tight">{display}</div>
+          <div className="bg-[#24263b]/80 backdrop-blur-md rounded-2xl p-5 text-right mb-6 border border-white/5 shadow-inner">
+            <div className="text-[13px] text-white/50 min-h-[1.25rem] font-medium tracking-wider mb-1">{equationStr}</div>
+            <div className="text-[42px] font-bold truncate text-white tracking-tight leading-none">{display}</div>
           </div>
 
           <div className="grid grid-cols-4 gap-3">
@@ -171,13 +179,13 @@ export const CalculatorWidget: React.FC<CalculatorWidgetProps> = ({ onTransfer }
               <button
                 key={i}
                 onClick={() => handleAction(btn)}
-                className={`p-3 text-lg font-medium rounded-xl transition-all active:scale-95 flex items-center justify-center
-                  ${btn === '=' ? 'row-span-2 bg-[#8b5cf6] text-white hover:bg-[#7c3aed] shadow-md border border-white/10' : 
-                    btn === '0' ? 'col-span-2 bg-[#35384e] text-white hover:bg-[#40435c] border border-white/5 shadow-sm' : 
-                    ['+', '-', '×', '÷'].includes(btn) ? 'bg-[#35384e] text-[#a78bfa] hover:bg-[#40435c] border border-white/5 shadow-sm' : 
+                className={`p-3.5 text-[20px] font-semibold rounded-[18px] transition-all active:scale-95 flex items-center justify-center
+                  ${btn === '=' ? 'row-span-2 bg-gradient-to-br from-violet-600 to-purple-700 text-white hover:from-violet-500 hover:to-purple-600 shadow-[0_8px_20px_rgba(139,92,246,0.3)] border border-white/10' : 
+                    btn === '0' ? 'col-span-2 bg-[#2d3047]/80 text-white hover:bg-[#3d415f] border border-white/5 shadow-sm' : 
+                    ['+', '-', '×', '÷'].includes(btn) ? 'bg-[#2d3047]/80 text-[#c084fc] hover:bg-[#3d415f] border border-white/5 shadow-sm' : 
                     btn === 'C' ? 'bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 border border-rose-500/10 shadow-sm' :
-                    btn === '±' ? 'bg-[#35384e] text-white/70 hover:bg-[#40435c] border border-white/5 shadow-sm' :
-                    'bg-[#2d3047] text-white hover:bg-[#3d415f] border border-white/5 shadow-sm'
+                    btn === '±' ? 'bg-[#2d3047]/80 text-white/70 hover:bg-[#3d415f] border border-white/5 shadow-sm' :
+                    'bg-[#24263b]/80 text-white hover:bg-[#35384e] border border-white/5 shadow-sm'
                   }`}
                 style={btn === '=' ? { gridRow: 'span 2' } : {}}
               >
@@ -186,7 +194,25 @@ export const CalculatorWidget: React.FC<CalculatorWidgetProps> = ({ onTransfer }
             ))}
           </div>
         </div>
-      )}
-    </div>
+      </div>,
+      document.body
+    );
+  };
+
+  return (
+    <>
+      <div className="absolute top-4 right-4 z-50">
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="h-[42px] w-[42px] rounded-xl bg-muted/50 border border-border shadow-sm text-foreground/80 hover:text-foreground hover:bg-white/10 flex items-center justify-center transition-all hover:-translate-y-0.5 hover:shadow-md active:scale-95 backdrop-blur-md"
+          aria-label="Toggle Calculator"
+        >
+          {isOpen ? <X size={20} /> : <Calculator size={20} />}
+        </button>
+      </div>
+
+      {renderModal()}
+    </>
   );
 };
+
