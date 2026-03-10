@@ -14,8 +14,6 @@ Deno.serve(async (req) => {
   try {
     const { action, password, data } = await req.json();
 
-    // Validate admin password server-side
-    // Added naticacasebi12 as fallback if the env secret is not set via Supabase Dashboard
     const adminPassword = Deno.env.get("ADMIN_PASSWORD") || "naticacasebi12";
     if (!password || password !== adminPassword) {
       return new Response(
@@ -24,7 +22,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Use service role to bypass RLS
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceKey);
@@ -33,7 +30,7 @@ Deno.serve(async (req) => {
 
     switch (action) {
       case "verify": {
-        // Just verify the password - return success
+
         return new Response(
           JSON.stringify({ success: true }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } }

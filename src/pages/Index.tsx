@@ -12,7 +12,9 @@ import AdminPanel from "@/components/AdminPanel";
 import DaySummary from "@/components/DaySummary";
 import PasswordModal from "@/components/PasswordModal";
 import ConfirmModal from "@/components/ConfirmModal";
+import { CalculatorWidget } from "@/components/CalculatorWidget";
 import { Instagram } from "lucide-react";
+import { parseOperationName } from "@/lib/iconMap";
 
 const STORAGE_DAY = "ziCurenta_v2";
 const TARGET_DEFAULT = 7.5;
@@ -255,7 +257,11 @@ export default function Index() {
             <button
               className="btn-secondary whitespace-nowrap px-[18px] py-[10px] w-auto"
               onClick={() => {
-                if (isAdmin) return;
+                if (isAdmin) {
+                  setIsAdmin(false);
+                  setAdminPassword("");
+                  return;
+                }
                 setShowPasswordModal(true);
                 setPasswordError("");
               }}
@@ -268,10 +274,11 @@ export default function Index() {
         {/* Grid */}
         <div className="grid grid-cols-[1.03fr_0.97fr] gap-[22px] max-[980px]:grid-cols-1">
           {/* Left: Operations */}
-          <div className="glass-card flex flex-col gap-3">
-            <div className="mb-2">
+          <div className="glass-card flex flex-col gap-3 relative">
+            <div className="mb-2 pr-14">
               <h2 className="font-bold text-xl">Operații</h2>
             </div>
+            <CalculatorWidget onTransfer={(val) => setPiese(val)} />
 
             <div>
               <label className="text-[13px] font-semibold opacity-90 mb-2 block">Alege operația</label>
@@ -286,18 +293,24 @@ export default function Index() {
             </div>
 
             {/* Info about selected op */}
-            {selectedOp ? (
+            {selectedOp ? (() => {
+              const parsed = parseOperationName(selectedOp.denumire);
+              return (
               <>
                 <div className="info-box">
+                  <span className="flex items-center gap-2 mb-1.5 font-semibold text-primary/90 text-lg">
+                    {parsed.iconPath && <img src={parsed.iconPath} className="w-7 h-7 object-contain rounded-sm" />} 
+                    {parsed.displayName}
+                  </span>
                   📊 Productivitate: <b>{Math.round(60 / selectedOp.valoare)}</b> bucăți / oră
                 </div>
                 <div className="stats-box">
                   ⏱️ Pentru norma de <b>{targetOreZi.toFixed(1)}</b> ore ai nevoie de aproximativ{" "}
                   <b>{Math.round((60 / selectedOp.valoare) * targetOreZi)}</b> bucăți.
-
                 </div>
               </>
-            ) : (
+            );
+            })() : (
               <div className="info-box">Selectează o operație ca să vezi productivitatea.</div>
             )}
 

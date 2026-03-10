@@ -1,5 +1,7 @@
 import type { OperatieZi } from "@/types/operatie";
 import { Trash2 } from "lucide-react";
+import { parseOperationName } from "@/lib/iconMap";
+
 interface DaySummaryProps {
   operatiiZi: OperatieZi[];
   totalOre: number;
@@ -46,11 +48,15 @@ export default function DaySummary({ operatiiZi, totalOre, targetOreZi, onReset,
       </div>
 
       <div className="flex flex-col gap-2.5 mt-2">
-        {operatiiZi.map((op, i) => (
+        {operatiiZi.map((op, i) => {
+          const parsed = parseOperationName(op.denumire);
+          return (
           <div key={i} className="op-list-item">
             <div className="flex justify-between gap-2.5 items-start mb-1.5">
-              <div className="font-bold">
-                {i + 1}. {op.denumire}
+              <div className="font-bold flex items-center gap-2">
+                <span>{i + 1}.</span> 
+                {parsed.iconPath && <img src={parsed.iconPath} className="w-7 h-7 object-contain rounded-md bg-white/10" />}
+                {parsed.displayName}
               </div>
               <div className="flex items-center gap-2">
                 <div className="list-badge">{op.valoare.toFixed(3)}</div>
@@ -69,7 +75,7 @@ export default function DaySummary({ operatiiZi, totalOre, targetOreZi, onReset,
             </div>
             <div className="text-muted-foreground">{op.bucOra.toFixed(0)} buc/oră</div>
           </div>
-        ))}
+        )})}
       </div>
 
       <button className="btn-danger" onClick={onReset}>

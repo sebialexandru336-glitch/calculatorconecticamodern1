@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { Operatie } from "@/types/operatie";
 import { Pencil, Trash2 } from "lucide-react";
+import { parseOperationName } from "@/lib/iconMap";
 
 interface OperatiiDropdownProps {
   operatii: Operatie[];
@@ -27,7 +28,8 @@ export default function OperatiiDropdown({
   const filtered = operatii.filter((op) => {
     const q = search.trim().toLowerCase();
     if (!q) return true;
-    return op.denumire.toLowerCase().includes(q) || String(op.valoare).includes(q);
+    const parsed = parseOperationName(op.denumire);
+    return parsed.displayName.toLowerCase().includes(q) || String(op.valoare).includes(q);
   });
 
   return (
@@ -36,10 +38,22 @@ export default function OperatiiDropdown({
         className={`custom-select-trigger ${isOpen ? "active" : ""}`}
         onClick={() => setIsOpen(!isOpen)}
       >
-        <div className="truncate">
-          {selected
-            ? `${selected.denumire} | ${selected.valoare.toFixed(3)}`
-            : "Selectează operație"}
+        <div className="truncate flex items-center gap-2">
+          {selected ? (
+            <>
+              {(() => {
+                const parsed = parseOperationName(selected.denumire);
+                return (
+                  <>
+                    {parsed.iconPath && <img src={parsed.iconPath} className="w-7 h-7 object-contain rounded-md bg-white/10" />}
+                    <span>{parsed.displayName} | {selected.valoare.toFixed(3)}</span>
+                  </>
+                );
+              })()}
+            </>
+          ) : (
+            "Selectează operație"
+          )}
         </div>
         <div className={`select-arrow ${isOpen ? "open" : ""}`} />
       </div>
@@ -71,7 +85,12 @@ export default function OperatiiDropdown({
                     setSearch("");
                   }}
                 >
-                  <div className="text-sm font-semibold truncate">{op.denumire}</div>
+                  <div className="text-sm font-semibold truncate flex items-center gap-2">
+                    {parseOperationName(op.denumire).iconPath && (
+                      <img src={parseOperationName(op.denumire).iconPath!} className="w-7 h-7 object-contain rounded-md bg-white/10" />
+                    )}
+                    {parseOperationName(op.denumire).displayName}
+                  </div>
                   <div className="text-xs text-muted-foreground">
                     Valoare fișă: {op.valoare.toFixed(3)} • {Math.round(60 / op.valoare)} buc/oră
                   </div>
