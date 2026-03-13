@@ -7,12 +7,12 @@ export async function fetchOperatii(): Promise<Operatie[]> {
     .select("*")
     .order("denumire");
   if (error) throw error;
-  return (data || []).map((d: any) => ({
-    id: d.id,
-    denumire: d.denumire,
+  return (data || []).map((d: Record<string, unknown>) => ({
+    id: String(d.id),
+    denumire: String(d.denumire),
     valoare: Number(d.valoare),
-    created_at: d.created_at,
-    updated_at: d.updated_at,
+    created_at: String(d.created_at),
+    updated_at: String(d.updated_at),
   }));
 }
 

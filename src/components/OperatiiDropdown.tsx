@@ -46,7 +46,7 @@ export default function OperatiiDropdown({
                 return (
                   <>
                     {parsed.iconPath && <img src={parsed.iconPath} className="w-7 h-7 object-contain rounded-md bg-white/10" />}
-                    <span>{parsed.displayName} | {selected.valoare.toFixed(3)}</span>
+                    <span>{parsed.displayName}</span>
                   </>
                 );
               })()}
@@ -75,53 +75,65 @@ export default function OperatiiDropdown({
               Nu există operații pentru căutarea asta.
             </div>
           ) : (
-            filtered.map((op) => (
-              <div key={op.id} className="dropdown-item" onClick={(e) => e.stopPropagation()}>
-                <div
-                  className="flex-1 min-w-0 cursor-pointer flex flex-col gap-1 p-0.5"
-                  onClick={() => {
-                    onSelect(op);
-                    setIsOpen(false);
-                    setSearch("");
-                  }}
-                >
-                  <div className="text-sm font-semibold truncate flex items-center gap-2">
-                    {parseOperationName(op.denumire).iconPath && (
-                      <img src={parseOperationName(op.denumire).iconPath!} className="w-7 h-7 object-contain rounded-md bg-white/10" />
+            filtered.map((op) => {
+              const parsed = parseOperationName(op.denumire);
+              return (
+                <div key={op.id} className="dropdown-item" onClick={(e) => e.stopPropagation()}>
+                  <div
+                    className="flex-1 min-w-0 cursor-pointer flex flex-col gap-1 p-0.5"
+                    onClick={() => {
+                      onSelect(op);
+                      setIsOpen(false);
+                      setSearch("");
+                    }}
+                  >
+                    <div className="text-sm font-semibold truncate flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 truncate">
+                        {parsed.iconPath && (
+                          <img src={parsed.iconPath} className="w-7 h-7 object-contain rounded-md bg-white/10" />
+                        )}
+                        {parsed.displayName}
+                      </div>
+                      {parsed.isComplex && !isAdmin && (
+                        <span className="text-xs bg-white/10 px-2 py-0.5 rounded-md text-white/70 whitespace-nowrap">
+                          {parsed.variants?.length} variante
+                        </span>
+                      )}
+                    </div>
+                    {(!parsed.isComplex || isAdmin) && (
+                      <div className="text-xs text-muted-foreground">
+                        {parsed.isComplex ? `Repertoriu complex (${parsed.variants?.length} piese)` : `Valoare fișă: ${op.valoare.toFixed(3)} • ${Math.round(60 / op.valoare)} buc/oră`}
+                      </div>
                     )}
-                    {parseOperationName(op.denumire).displayName}
                   </div>
-                  <div className="text-xs text-muted-foreground">
-                    Valoare fișă: {op.valoare.toFixed(3)} • {Math.round(60 / op.valoare)} buc/oră
-                  </div>
+                  {isAdmin && (
+                    <div className="flex gap-2 items-center">
+                      <button
+                        className="icon-btn-edit"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onEdit(op);
+                          setIsOpen(false);
+                        }}
+                        aria-label="Editează"
+                      >
+                        <Pencil size={18} />
+                      </button>
+                      <button
+                        className="icon-btn-delete"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onDelete(op);
+                        }}
+                        aria-label="Șterge"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
+                  )}
                 </div>
-                {isAdmin && (
-                  <div className="flex gap-2 items-center">
-                    <button
-                      className="icon-btn-edit"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onEdit(op);
-                        setIsOpen(false);
-                      }}
-                      aria-label="Editează"
-                    >
-                      <Pencil size={18} />
-                    </button>
-                    <button
-                      className="icon-btn-delete"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onDelete(op);
-                      }}
-                      aria-label="Șterge"
-                    >
-                      <Trash2 size={18} />
-                    </button>
-                  </div>
-                )}
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       </div>
