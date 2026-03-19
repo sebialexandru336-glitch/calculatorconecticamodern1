@@ -1,6 +1,7 @@
 export const AVAILABLE_ICONS = [
   { id: 'connector', label: 'Conector (Negru)', path: '/connector_black.png' },
-  { id: 'connector-simple', label: 'Conector (Normal)', path: '/connector_simple.png' }
+  { id: 'connector-simple', label: 'Conector (Normal)', path: '/connector_simple.png' },
+  { id: 'pin-header', label: 'Șir de Pini (90°)', path: '/pin_header_2.png' }
 ];
 
 export interface OperationVariant {

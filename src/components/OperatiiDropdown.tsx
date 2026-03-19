@@ -25,12 +25,21 @@ export default function OperatiiDropdown({
 
   const selected = operatii.find((o) => o.id === selectedId);
 
-  const filtered = operatii.filter((op) => {
-    const q = search.trim().toLowerCase();
-    if (!q) return true;
-    const parsed = parseOperationName(op.denumire);
-    return parsed.displayName.toLowerCase().includes(q) || String(op.valoare).includes(q);
-  });
+  const filtered = operatii
+    .filter((op) => {
+      const q = search.trim().toLowerCase();
+      if (!q) return true;
+      const parsed = parseOperationName(op.denumire);
+      return parsed.displayName.toLowerCase().includes(q) || String(op.valoare).includes(q);
+    })
+    .sort((a, b) => {
+      const aParsed = parseOperationName(a.denumire);
+      const bParsed = parseOperationName(b.denumire);
+      // Sort complex operations (with variants) above simple ones
+      if (aParsed.isComplex && !bParsed.isComplex) return -1;
+      if (!aParsed.isComplex && bParsed.isComplex) return 1;
+      return 0;
+    });
 
   return (
     <div>

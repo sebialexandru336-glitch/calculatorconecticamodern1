@@ -66,6 +66,7 @@
   }
   input[type=number] {
     -moz-appearance: textfield;
+    appearance: textfield;
   }
 }
 
@@ -425,6 +426,32 @@
 .select-arrow.open {
   transform: rotate(-135deg);
   margin-top: 3px;
+}
+
+/* Custom modern scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(0 0% 100% / 0.15);
+  border-radius: 8px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(0 0% 100% / 0.25);
+}
+
+/* Firefox scrollbar support */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(0 0% 100% / 0.15) transparent;
 }
 
 @media (max-width: 980px) {
