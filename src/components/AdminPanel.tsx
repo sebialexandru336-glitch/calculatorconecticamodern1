@@ -1,26 +1,47 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import type { Operatie } from "@/types/operatie";
 import { AVAILABLE_ICONS, parseOperationName, formatOperationName, formatComplexOperationName, OperationVariant } from "@/lib/iconMap";
 import { Image, Plus, Trash2 } from "lucide-react";
 
 interface AdminPanelProps {
+  operatii: Operatie[];
   editingOp: Operatie | null;
   onSave: (denumire: string, valoare: number) => void;
   onCancelEdit: () => void;
+  onAddLine?: (lineName: string) => void;
+  onDeleteLine?: (lineName: string) => void;
 }
 
-export default function AdminPanel({ editingOp, onSave, onCancelEdit }: AdminPanelProps) {
+const AdminPanel = React.memo(function AdminPanel({ operatii, editingOp, onSave, onCancelEdit, onAddLine, onDeleteLine }: AdminPanelProps) {
   const [denumire, setDenumire] = useState("");
   const [valoare, setValoare] = useState("");
   const [iconId, setIconId] = useState<string | null>(null);
+  const [category, setCategory] = useState("FLAKAFIX");
+  const [isCatOpen, setIsCatOpen] = useState(false);
+  const [catSearch, setCatSearch] = useState("");
 
   const [hasVariants, setHasVariants] = useState(false);
   const [variants, setVariants] = useState<OperationVariant[]>([]);
+
+  const [tab, setTab] = useState<"operatii" | "linii">("operatii");
+  const [newLineName, setNewLineName] = useState("");
+
+  const categories = React.useMemo(() => {
+    const cats = new Set<string>(["FLAKAFIX"]);
+    operatii.forEach(op => {
+      const parsed = parseOperationName(op.denumire);
+      if (parsed.category?.toUpperCase() !== "TEST") {
+        cats.add(parsed.category || "FLAKAFIX");
+      }
+    });
+    return Array.from(cats).sort();
+  }, [operatii]);
 
   useEffect(() => {
     if (editingOp) {
       const parsed = parseOperationName(editingOp.denumire);
       setDenumire(parsed.displayName);
+      setCategory(parsed.category || "FLAKAFIX");
       
       if (parsed.isComplex) {
         setHasVariants(true);
@@ -48,13 +69,13 @@ export default function AdminPanel({ editingOp, onSave, onCancelEdit }: AdminPan
 
     if (hasVariants) {
       if (!denumire.trim() || variants.length === 0) return;
-      finalDenumire = formatComplexOperationName(denumire, variants);
+      finalDenumire = formatComplexOperationName(denumire, variants, category);
       finalValoare = parseFloat(variants[0].valoare.replace(",", "."));
       if (isNaN(finalValoare)) finalValoare = 0;
     } else {
       const val = parseFloat(valoare.replace(",", "."));
       if (!denumire.trim() || isNaN(val) || val <= 0) return;
-      finalDenumire = formatOperationName(denumire, iconId);
+      finalDenumire = formatOperationName(denumire, iconId, category);
       finalValoare = val;
     }
     
@@ -66,6 +87,7 @@ export default function AdminPanel({ editingOp, onSave, onCancelEdit }: AdminPan
       setIconId(null);
       setHasVariants(false);
       setVariants([]);
+      // Keep the same category to easily add multiple operations to it
     }
   };
 
@@ -81,14 +103,93 @@ export default function AdminPanel({ editingOp, onSave, onCancelEdit }: AdminPan
     setVariants(variants.filter(v => v.id !== id));
   };
 
-
-
   return (
     <div className="flex flex-col gap-3 mt-1.5">
       <div className="flex items-center justify-between gap-3 mb-1">
         <h2 className="font-bold text-[17px]">Panou Admin</h2>
         <div className="text-xs text-muted-foreground">
-          {editingOp ? "Editezi operația selectată" : "Adaugă sau editează operații"}
+          {tab === "operatii" 
+            ? (editingOp ? "Editezi operația selectată" : "Adaugă sau editează operații")
+            : "Gestionează liniile de producție"}
+        </div>
+      </div>
+
+      <div className="flex bg-white/5 rounded-lg p-1 mb-2">
+        <button
+          className={`flex-1 py-1.5 text-sm font-bold rounded-md transition-all ${tab === "operatii" ? "bg-primary text-white shadow-md" : "text-white/50 hover:text-white/80"}`}
+          onClick={() => setTab("operatii")}
+        >
+          Operații
+        </button>
+        <button
+          className={`flex-1 py-1.5 text-sm font-bold rounded-md transition-all ${tab === "linii" ? "bg-primary text-white shadow-md" : "text-white/50 hover:text-white/80"}`}
+          onClick={() => setTab("linii")}
+        >
+          Linii
+        </button>
+      </div>
+
+      {tab === "operatii" ? (
+        <>
+          <div className="relative mb-2 mt-2">
+            {isCatOpen && (
+              <div className="fixed inset-0 z-40" onClick={() => setIsCatOpen(false)} />
+            )}
+            <div className="relative z-50">
+          <label className="text-xs font-semibold opacity-80 mb-1.5 block">Categorie / Linie</label>
+          <div
+            className={`custom-select-trigger ${isCatOpen ? "active" : ""}`}
+            onClick={() => {
+              setIsCatOpen(!isCatOpen);
+              if (!isCatOpen) setCatSearch("");
+            }}
+          >
+            <div className="truncate flex-1 font-bold text-primary/90">{category}</div>
+            <div className={`select-arrow ${isCatOpen ? "open" : ""}`} />
+          </div>
+
+          <div className={`dropdown-panel mt-2 ${isCatOpen ? "open" : ""}`}>
+            <div className="pb-2 relative z-[2]">
+              <input
+                className="calc-input py-2 text-sm"
+                type="text"
+                placeholder="Caută sau adaugă linie nouă..."
+                value={catSearch}
+                onChange={(e) => setCatSearch(e.target.value)}
+                onClick={(e) => e.stopPropagation()}
+                autoComplete="off"
+              />
+            </div>
+            <div className="max-h-[160px] overflow-auto rounded-[10px]">
+              {categories
+                .filter((c) => c.toLowerCase().includes(catSearch.trim().toLowerCase()))
+                .map((c) => (
+                  <div
+                    key={c}
+                    className={`dropdown-item ${category === c ? 'bg-primary/20 text-white font-bold' : ''}`}
+                    onClick={() => {
+                      setCategory(c);
+                      setCatSearch("");
+                      setIsCatOpen(false);
+                    }}
+                  >
+                    {c}
+                  </div>
+                ))}
+              {catSearch.trim().length > 0 && !categories.some(c => c.toLowerCase() === catSearch.trim().toLowerCase()) && (
+                <div
+                  className="dropdown-item text-primary font-bold bg-primary/10"
+                  onClick={() => {
+                    setCategory(catSearch.trim().toUpperCase());
+                    setCatSearch("");
+                    setIsCatOpen(false);
+                  }}
+                >
+                  + Adaugă linia "{catSearch.trim().toUpperCase()}"
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -218,7 +319,62 @@ export default function AdminPanel({ editingOp, onSave, onCancelEdit }: AdminPan
           </button>
         )}
       </div>
+    </>
+      ) : (
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-2">
+            <label className="text-xs font-semibold opacity-80">Linii Existente</label>
+            <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden flex flex-col">
+              {categories.map(c => (
+                <div key={c} className="flex items-center justify-between p-3 border-b border-white/5 last:border-0">
+                  <span className="font-bold text-sm text-white/90">{c}</span>
+                  <button 
+                    onClick={() => {
+                      if (categories.length > 1) {
+                        onDeleteLine?.(c);
+                      } else {
+                        alert("Nu poți șterge ultima linie rămasă! Aplicația are nevoie de cel puțin o linie activă.");
+                      }
+                    }} 
+                    className={`p-1.5 rounded-md transition-colors ${categories.length <= 1 ? 'text-white/20 cursor-not-allowed' : 'text-rose-400 hover:bg-rose-400/10'}`}
+                    title={categories.length <= 1 ? "Nu poți șterge singura linie existentă" : `Șterge linia ${c}`}
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              ))}
+              {categories.length === 0 && <div className="p-4 text-center text-xs opacity-50">Nicio linie găsită.</div>}
+            </div>
+          </div>
+          
+          <div className="flex flex-col gap-2 pt-2 border-t border-white/10">
+            <label className="text-xs font-semibold opacity-80">Crează Linie Nouă</label>
+            <div className="flex gap-2">
+              <input
+                className="calc-input flex-1"
+                type="text"
+                placeholder="Numele liniei"
+                value={newLineName}
+                onChange={(e) => setNewLineName(e.target.value)}
+              />
+              <button 
+                className="bg-primary hover:bg-primary/90 text-white font-bold px-4 rounded-xl text-sm transition-all"
+                onClick={() => {
+                  if (newLineName.trim() && onAddLine) {
+                    onAddLine(newLineName.trim().toUpperCase());
+                    setNewLineName("");
+                  }
+                }}
+              >
+                Adaugă
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
-}
+});
+
+export default AdminPanel;

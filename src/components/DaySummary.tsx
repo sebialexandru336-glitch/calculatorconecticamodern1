@@ -1,3 +1,4 @@
+import React, { useMemo } from "react";
 import type { OperatieZi } from "@/types/operatie";
 import { Trash2 } from "lucide-react";
 import { parseOperationName } from "@/lib/iconMap";
@@ -10,7 +11,7 @@ interface DaySummaryProps {
   onRemoveOperatie: (index: number) => void;
 }
 
-export default function DaySummary({ operatiiZi, totalOre, targetOreZi, onReset, onRemoveOperatie }: DaySummaryProps) {
+const DaySummary = React.memo(function DaySummary({ operatiiZi, totalOre, targetOreZi, onReset, onRemoveOperatie }: DaySummaryProps) {
   const procent = targetOreZi > 0 ? (totalOre / targetOreZi) * 100 : 0;
 
   return (
@@ -84,4 +85,6 @@ export default function DaySummary({ operatiiZi, totalOre, targetOreZi, onReset,
 
     </div>
   );
-}
+});
+
+export default DaySummary;

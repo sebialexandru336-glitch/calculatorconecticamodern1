@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState, useMemo } from "react";
 import type { Operatie } from "@/types/operatie";
 import { Pencil, Trash2 } from "lucide-react";
 import { parseOperationName } from "@/lib/iconMap";
@@ -12,7 +12,7 @@ interface OperatiiDropdownProps {
   onDelete: (op: Operatie) => void;
 }
 
-export default function OperatiiDropdown({
+const OperatiiDropdown = React.memo(function OperatiiDropdown({
   operatii,
   selectedId,
   isAdmin,
@@ -23,23 +23,25 @@ export default function OperatiiDropdown({
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
 
-  const selected = operatii.find((o) => o.id === selectedId);
+  const selected = useMemo(() => operatii.find((o) => o.id === selectedId), [operatii, selectedId]);
 
-  const filtered = operatii
-    .filter((op) => {
-      const q = search.trim().toLowerCase();
-      if (!q) return true;
-      const parsed = parseOperationName(op.denumire);
-      return parsed.displayName.toLowerCase().includes(q) || String(op.valoare).includes(q);
-    })
-    .sort((a, b) => {
-      const aParsed = parseOperationName(a.denumire);
-      const bParsed = parseOperationName(b.denumire);
-      // Sort complex operations (with variants) above simple ones
-      if (aParsed.isComplex && !bParsed.isComplex) return -1;
-      if (!aParsed.isComplex && bParsed.isComplex) return 1;
-      return 0;
-    });
+  const filtered = useMemo(() => {
+    return operatii
+      .filter((op) => {
+        const q = search.trim().toLowerCase();
+        if (!q) return true;
+        const parsed = parseOperationName(op.denumire);
+        return parsed.displayName.toLowerCase().includes(q) || String(op.valoare).includes(q);
+      })
+      .sort((a, b) => {
+        const aParsed = parseOperationName(a.denumire);
+        const bParsed = parseOperationName(b.denumire);
+        // Sort complex operations (with variants) above simple ones
+        if (aParsed.isComplex && !bParsed.isComplex) return -1;
+        if (!aParsed.isComplex && bParsed.isComplex) return 1;
+        return 0;
+      });
+  }, [operatii, search]);
 
   return (
     <div>
@@ -148,4 +150,6 @@ export default function OperatiiDropdown({
       </div>
     </div>
   );
-}
+});
+
+export default OperatiiDropdown;

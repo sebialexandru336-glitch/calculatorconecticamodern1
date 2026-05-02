@@ -12,14 +12,24 @@ export interface OperationVariant {
 }
 
 export const parseOperationName = (rawName: string) => {
-  if (rawName.startsWith("[JSON:")) {
-    const splitIdx = rawName.lastIndexOf("] ");
+  let category = "FLAKAFIX"; // Default to FLAKAFIX for old operations without category
+  let restName = rawName.trim();
+
+  const catMatch = restName.match(/^\[CAT:(.+?)\]\s*(.*)/);
+  if (catMatch) {
+    category = catMatch[1];
+    restName = catMatch[2];
+  }
+
+  if (restName.startsWith("[JSON:")) {
+    const splitIdx = restName.lastIndexOf("] ");
     if (splitIdx !== -1) {
-      const jsonStr = rawName.substring(6, splitIdx);
-      const displayName = rawName.substring(splitIdx + 2);
+      const jsonStr = restName.substring(6, splitIdx);
+      const displayName = restName.substring(splitIdx + 2);
       try {
         const data = JSON.parse(jsonStr);
         return {
+          category,
           isComplex: true,
           displayName: displayName,
           variants: data.v as OperationVariant[],
@@ -32,9 +42,10 @@ export const parseOperationName = (rawName: string) => {
     }
   }
 
-  const match = rawName.match(/^\[ICON:(.+?)\]\s*(.*)/);
+  const match = restName.match(/^\[ICON:(.+?)\]\s*(.*)/);
   if (match) {
     return {
+      category,
       isComplex: false,
       iconId: match[1],
       displayName: match[2],
@@ -44,20 +55,23 @@ export const parseOperationName = (rawName: string) => {
   }
   
   return {
+    category,
     isComplex: false,
     iconId: null,
-    displayName: rawName,
+    displayName: restName,
     iconPath: null,
     variants: [],
   };
 };
 
-export const formatOperationName = (displayName: string, iconId: string | null) => {
-  if (!iconId) return displayName.trim();
-  return `[ICON:${iconId}] ${displayName.trim()}`;
+export const formatOperationName = (displayName: string, iconId: string | null, category: string) => {
+  const catPrefix = category ? `[CAT:${category.trim()}] ` : `[CAT:FLAKAFIX] `;
+  if (!iconId) return `${catPrefix}${displayName.trim()}`;
+  return `${catPrefix}[ICON:${iconId}] ${displayName.trim()}`;
 };
 
-export const formatComplexOperationName = (displayName: string, variants: OperationVariant[]) => {
+export const formatComplexOperationName = (displayName: string, variants: OperationVariant[], category: string) => {
   const jsonStr = JSON.stringify({ v: variants });
-  return `[JSON:${jsonStr}] ${displayName.trim()}`;
+  const catPrefix = category ? `[CAT:${category.trim()}] ` : `[CAT:FLAKAFIX] `;
+  return `${catPrefix}[JSON:${jsonStr}] ${displayName.trim()}`;
 };

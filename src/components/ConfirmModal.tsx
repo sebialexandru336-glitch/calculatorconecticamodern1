@@ -1,3 +1,5 @@
+import React from "react";
+
 interface ConfirmModalProps {
   open: boolean;
   title?: string;
@@ -10,7 +12,7 @@ interface ConfirmModalProps {
   onCancel: () => void;
 }
 
-export default function ConfirmModal({
+const ConfirmModal = React.memo(function ConfirmModal({
   open,
   title = "Confirmare",
   message = "Ești sigur?",
@@ -51,4 +53,6 @@ export default function ConfirmModal({
       </div>
     </div>
   );
-}
+});
+
+export default ConfirmModal;

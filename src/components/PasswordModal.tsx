@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 
 interface PasswordModalProps {
   open: boolean;
@@ -8,7 +8,7 @@ interface PasswordModalProps {
   loading?: boolean;
 }
 
-export default function PasswordModal({ open, onClose, onSubmit, error, loading }: PasswordModalProps) {
+const PasswordModal = React.memo(function PasswordModal({ open, onClose, onSubmit, error, loading }: PasswordModalProps) {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
@@ -61,4 +61,6 @@ export default function PasswordModal({ open, onClose, onSubmit, error, loading 
       </div>
     </div>
   );
-}
+});
+
+export default PasswordModal;

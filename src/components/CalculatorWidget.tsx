@@ -6,7 +6,7 @@ interface CalculatorWidgetProps {
   onTransfer?: (value: string) => void;
 }
 
-export const CalculatorWidget: React.FC<CalculatorWidgetProps> = ({ onTransfer }) => {
+export const CalculatorWidget = React.memo<CalculatorWidgetProps>(({ onTransfer }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [display, setDisplay] = useState('0');
   const [previousValue, setPreviousValue] = useState<number | null>(null);
@@ -214,5 +214,4 @@ export const CalculatorWidget: React.FC<CalculatorWidgetProps> = ({ onTransfer }
       {renderModal()}
     </>
   );
-};
-
+});
